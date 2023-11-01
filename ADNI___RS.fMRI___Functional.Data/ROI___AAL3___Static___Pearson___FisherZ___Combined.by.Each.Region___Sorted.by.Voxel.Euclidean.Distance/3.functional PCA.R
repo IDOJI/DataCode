@@ -117,10 +117,41 @@ for(k in 1:length(Preprocessing_Pipeline)){
 #===============================================================================
 # Exporting fPCA scores
 #===============================================================================
+# Define a function
+Extrac_fPCA_Scores_with_GroupNums = function(fPCA, path_Export, Preprocessing_Pipeline){
+  fPCA_Scores_GroupNum = c()
+  
+  fPCA_Scores = lapply(seq_along(fPCA), function(i){
+    
+    ith_Region = fPCA[[i]]
+    
+    ith_PC_Scores = ith_Region$scores %>% as.data.frame %>% as_tibble
+    
+    names(ith_PC_Scores) = paste0(names(fPCA)[i], "___", 1:ncol(ith_PC_Scores))
+    
+    fPCA_Scores_GroupNum <<- c(fPCA_Scores_GroupNum, rep(i, times = ncol(ith_PC_Scores)))
+    
+    return(ith_PC_Scores)
+  })
+  
+  fPCA_Scores = do.call(cbind, fPCA_Scores) %>% as_tibble
+  
+  fPCA_Combined = list(fPCA_Scores = fPCA_Scores, Features_Group_Nums = fPCA_Scores_GroupNum)
+  
+  saveRDS(fPCA_Combined, file = paste0(path_Export, "/fPCA_Scores_with_GroupNums___", Preprocessing_Pipeline, ".rds"))
+  
+  return(fPCA_Combined)
+}
+
+
+# fPCA data
 fPCA_1 = fPCA.list[[1]]
 fPCA_2 = fPCA.list[[2]]
 
 
+# Export & Extract scores
+fPCA_Scores_1 = Extrac_fPCA_Scores_with_GroupNums(fPCA_1, path_Data_SB_FDA_Euclidean, "FunImgARCWSF")
+fPCA_Scores_2 = Extrac_fPCA_Scores_with_GroupNums(fPCA_2, path_Data_SB_FDA_Euclidean, "FunImgARglobalCWSF")
 
 
 
@@ -128,9 +159,7 @@ fPCA_2 = fPCA.list[[2]]
 
 
 
-
-
-
+  
 
 
 
