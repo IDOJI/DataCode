@@ -46,10 +46,11 @@ path_Save = paste0(path_Data_SB_FDA_Euclidean, "/", "Subjects_List")
 #===============================================================================
 # Load FC Data
 #===============================================================================
-path_Data_1 = paste0(path_Data_SB_FDA, "/ROI___AAL3___Static___Pearson___FisherZ___Combined.by.Each.Region___Sorted.by.Voxel.Euclidean.Distance/Sorted_FC") %>% list.files(full.names=T, pattern="Sorted.FC.by.Dist___FunImgARCWSF.rds")
-path_Data_2 = paste0(path_Data_SB_FDA, "/ROI___AAL3___Static___Pearson___FisherZ___Combined.by.Each.Region___Sorted.by.Voxel.Euclidean.Distance/Sorted_FC") %>% list.files(full.names=T, pattern="Sorted.FC.by.Dist___FunImgARglobalCWSF.rds")
-Data_1 = readRDS(path_Data_1)
-Data_2 = readRDS(path_Data_2)
+path_SortedFC = list.files(path_Data_SB_FDA, full.names=T, pattern = "Euclidean") %>% list.files(full.names=T, pattern = "Sorted")
+path_Data = list.files(path_SortedFC, full.names=T, pattern = "\\.rds$")
+Data_1 = readRDS(path_Data[1])
+Data_2 = readRDS(path_Data[2])
+
 Data.list = list(Data_1, Data_2)
 
 RID_FC = Data_1[[1]] %>% colnames
@@ -81,6 +82,7 @@ Subjects_New = Subjects %>%
                 ) %>% 
   dplyr::mutate(DEMO___DIAGNOSIS_NEW = case_when(
     DEMO___DIAGNOSIS_NEW %in% c("AD(Possible)", "AD(Probable)", "Dementia") ~ "AD",
+    DEMO___DIAGNOSIS_NEW %in% c("LMCI", "EMCI") ~ "MCI",
     TRUE ~ DEMO___DIAGNOSIS_NEW
   )) %>% 
   dplyr::mutate(DEMO___SEX = case_when(
@@ -91,11 +93,17 @@ Subjects_New = Subjects %>%
   dplyr::mutate(RID = paste0("RID_", sprintf("%04d", RID))) %>% 
   dplyr::filter(RID %in% RID_FC) %>% 
   dplyr::mutate(DEMO___DIAGNOSIS_NEW = factor(DEMO___DIAGNOSIS_NEW, levels = c("CN", "MCI", "AD"))) %>% 
-  na.omit() %>% as_tibble
+  as_tibble
 
 
 
 
+#===============================================================================
+# Extract
+#===============================================================================
+Subjects_AD.MCI = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "MCI"))
+Subjects_AD.CN = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "CN"))
+Subjects_MCI.CN = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("MCI", "CN"))
 
 
 
@@ -103,7 +111,10 @@ Subjects_New = Subjects %>%
 #===============================================================================
 # Export
 #===============================================================================
-saveRDS(Subjects_New, paste0(path_Save, "/Selected_Subjects_List.rds"))
+saveRDS(Subjects_New, paste0(path_Save, "/Subjects_List_SB___ALL.rds"))
+saveRDS(Subjects_AD.MCI, paste0(path_Save, "/Subjects_List_SB___ADMCI.rds"))
+saveRDS(Subjects_AD.CN, paste0(path_Save, "/Subjects_List_SB___ADCN.rds"))
+saveRDS(Subjects_MCI.CN, paste0(path_Save, "/Subjects_List_SB___MCICN.rds"))
 
 
 
