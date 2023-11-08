@@ -69,7 +69,7 @@ RID_FC = Data_1[[1]] %>% colnames
 Subjects = read.csv(paste0(path_Data_Subject, "/Subjects_Lists_Exported/Final/[Final_Selected]_Subjects_list.csv"))
 
 # Intersection with FC
-Subjects_New = Subjects %>% 
+Subjects_Full = Subjects %>% 
   dplyr::filter(NFQ___BAND.TYPE == "SB") %>% 
   dplyr::select(RID,
                 DEMO___DIAGNOSIS_NEW,
@@ -101,20 +101,30 @@ Subjects_New = Subjects %>%
 #===============================================================================
 # Extract
 #===============================================================================
-Subjects_AD.MCI = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "MCI"))
-Subjects_AD.CN = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "CN"))
-Subjects_MCI.CN = Subjects_New %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("MCI", "CN"))
+Subjects_List.list = list()
+# AD MCI CN
+Subjects_List.list[[1]] = Subjects_Full = Subjects_Full
+Subjects_List.list[[2]] = Subjects_NonNA = Subjects_Full %>% na.omit
+# AD MCI
+Subjects_List.list[[3]] = Subjects_AD.MCI_Full = Subjects_Full %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "MCI"))
+Subjects_List.list[[4]] = Subjects_AD.MCI_NonNA = Subjects_AD.MCI_Full %>% na.omit
+# AD CN
+Subjects_List.list[[5]] = Subjects_AD.CN_Full = Subjects_Full %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "CN"))
+Subjects_List.list[[6]] = Subjects_AD.CN_NonNA = Subjects_AD.CN_Full %>% na.omit
+# MCI CN
+Subjects_List.list[[7]] = Subjects_MCI.CN_Full = Subjects_Full %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("MCI", "CN"))
+Subjects_List.list[[8]] = Subjects_MCI.CN_NonNA = Subjects_MCI.CN_Full %>% na.omit
 
-
+names(Subjects_List.list) = c("Subjects_Full", "Subjects_Full_NA",
+                              "Subjects_ADMCI", "Subjects_ADMCI_NA",
+                              "Subjects_ADCN", "Subjects_ADCN_NA",
+                              "Subjects_MCICN", "Subjects_MCICN_NA")
 
 
 #===============================================================================
 # Export
 #===============================================================================
-saveRDS(Subjects_New, paste0(path_Save, "/Subjects_List_SB___ALL.rds"))
-saveRDS(Subjects_AD.MCI, paste0(path_Save, "/Subjects_List_SB___ADMCI.rds"))
-saveRDS(Subjects_AD.CN, paste0(path_Save, "/Subjects_List_SB___ADCN.rds"))
-saveRDS(Subjects_MCI.CN, paste0(path_Save, "/Subjects_List_SB___MCICN.rds"))
+saveRDS(Subjects_List.list, paste0(path_Save, "/Subjects_List.rds"))
 
 
 

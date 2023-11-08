@@ -145,6 +145,7 @@ RID.list = list(NULL,
                 Subjects_List %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "CN")) %>% dplyr::select(RID) %>% unlist,
                 Subjects_List %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("AD", "MCI")) %>% dplyr::select(RID) %>% unlist,
                 Subjects_List %>% dplyr::filter(DEMO___DIAGNOSIS_NEW %in% c("MCI", "CN")) %>% dplyr::select(RID) %>% unlist)
+
 File_Names = c("1.FC_Full_without_SubjectsList_Intersection", 
                "2.FC_Full_with_SubjectsList_Intersection",
                "3.FC_Only_AD_n_CN",

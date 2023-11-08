@@ -61,38 +61,19 @@ Scores = lapply(path_Scores, readRDS) %>% setNames(Names_Scores)
 
 
 
-
 #===============================================================================
-# Modify Subjects list
+# Define a function
 #===============================================================================
-Subjects_Selected = Subjects %>% 
-  dplyr::select(RID, DEMO___DIAGNOSIS_NEW, DEMO___SEX, NFQ___BAND.TYPE) %>% 
-  dplyr::rename(DIAGNOSIS = DEMO___DIAGNOSIS_NEW, SEX = DEMO___SEX)
-
-# AD
-Subjects_Selected = Subjects_Selected %>% 
-  dplyr::mutate(DIAGNOSIS = ifelse(DIAGNOSIS  %in% c("AD(Possible)", "AD(Probable)", "Dementia"), "AD", DIAGNOSIS))
-
-# MCI
-Subjects_Selected = Subjects_Selected %>% 
-  dplyr::mutate(DIAGNOSIS = ifelse(DIAGNOSIS  %in% c("LMCI", "EMCI"), "MCI", DIAGNOSIS))
-
-# Factorize
-Subjects_Selected$DIAGNOSIS = factor(Subjects_Selected$DIAGNOSIS, levels = c("CN", "MCI", "AD"))
-
-
-# Select SB
-Subjects_Selected = Subjects_Selected %>% dplyr::filter(NFQ___BAND.TYPE=="SB") %>% dplyr::select(-NFQ___BAND.TYPE) 
-
-# SEX
-Subjects_Selected = Subjects_Selected %>% dplyr::mutate(SEX = ifelse(SEX=="Female", 0, 1))
+1) 각 데이터 셋을 불러옴
+ na.omit한 결과????????
 
 
 
 
-#===============================================================================
-# Modify fPC Score list
-#===============================================================================
+
+
+
+
 # Group Numbering
 fPCA_Scores_GroupNum_1 = fPCA_Scores_1$Features_Group_Nums
 fPCA_Scores_GroupNum_2 = fPCA_Scores_2$Features_Group_Nums
