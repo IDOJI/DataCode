@@ -1,4 +1,4 @@
- ##############################################################################################
+##############################################################################################
 # 0. Loading functions
 ##############################################################################################
 # rm(list=ls())
@@ -52,76 +52,26 @@ Names_Scores = basename(path_Scores) %>% tools::file_path_sans_ext()
 #===============================================================================
 # Loading Data
 #===============================================================================
-Subjects = lapply(path_Subjects, readRDS) %>% setNames(Names_Subjects)
+Subjects = readRDS(path_Subjects)
 Scores = lapply(path_Scores, readRDS) %>% setNames(Names_Scores)
 
 
 
-
-
-
-
 #===============================================================================
-# Test
+# Data setting
 #===============================================================================
-Scores$
+Selected_Scores = Scores$FunImgARglobalCWSF___3.FC_Only_AD_n_CN
+Selected_GroupNum = Selected_Scores$Features_Group_Nums
+Selected_Scores = Selected_Scores$fPCA_Scores
+
+
+Subjects$Subjects_Full
 
 
 
 
 
 
-
-# Group Numbering
-fPCA_Scores_GroupNum_1 = fPCA_Scores_1$Features_Group_Nums
-fPCA_Scores_GroupNum_2 = fPCA_Scores_2$Features_Group_Nums
-
-
-# Scores
-fPCA_Scores_1 = fPCA_Scores_1$fPCA_Scores
-fPCA_Scores_2 = fPCA_Scores_2$fPCA_Scores
-names(fPCA_Scores_2) = paste0("Global___", names(fPCA_Scores_2))
-
-
-
-
-# FunImgARCWSF
-Combined_1 = bind_cols(Subjects_Selected, fPCA_Scores_1)
-Combined_1 = list(Data = Combined_1, Features_Group_Nums = fPCA_Scores_GroupNum_1)
-saveRDS(Combined_1, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARCWSF.rds"))
-
-
-
-# FunImgARglobalCWSF
-Combined_2 = bind_cols(Subjects_Selected, fPCA_Scores_2)
-Combined_2 = list(Data = Combined_2, Features_Group_Nums = fPCA_Scores_GroupNum_2)
-saveRDS(Combined_2, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARglobalCWSF.rds"))
-
-
-
-# +global (서로 다른 그룹으로 취급)
-Combined_3 = bind_cols(Subjects_Selected, fPCA_Scores_1, fPCA_Scores_2)
-Combined_3 = list(Data = Combined_3, Features_Group_Nums = c(fPCA_Scores_GroupNum_1, length(fPCA_Scores_GroupNum_1) + fPCA_Scores_GroupNum_2))
-saveRDS(Combined_3, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARCWSF + FunImgARglobalCWSF___Diff.rds"))
-
-
-# 서로 같은 그룹 취급
-
-
-
-
-
-
-#===============================================================================
-# Subjects list
-#===============================================================================
-lapply(Smoothing.list, function(ith_Smoothing){
-  ith_RID = ith_Smoothing$ACC_pre_L$smoothing$y %>% colnames
-  
-})
-
-path_Data_SB_FDA_Euclidean_SubjectsList = list.files(path_Data_SB_FDA_Euclidean, full.names=T, pattern = "Subjects") %>% list.files(full.names=T)
-Subjects = readRDS(path_Data_SB_FDA_Euclidean_SubjectsList)
 
 
 

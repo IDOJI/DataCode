@@ -2,8 +2,9 @@ function (x, y,
           alpha = 1, 
           standardize = TRUE, 
           penaltyFactors = NULL, 
-          positiveID = NULL, family = c("cumulative", "sratio", "cratio", 
-                                        "acat"), reverse = FALSE, link = c("logit", "probit", 
+          positiveID = NULL, 
+          family = c("cumulative", "sratio", "cratio",  "acat"), 
+          reverse = FALSE, link = c("logit", "probit", 
                                                                            "cloglog", "cauchit"), customLink = NULL, parallelTerms = TRUE, 
           nonparallelTerms = FALSE, parallelPenaltyFactor = 1, lambdaVals = NULL, 
           nLambda = 20, lambdaMinRatio = 0.01, includeLambda0 = FALSE, 
@@ -75,6 +76,52 @@ function (x, y,
   #=============================================================================
   # Link function
   #=============================================================================
+  #----------------------------
+  # makeLinkfun
+  makeLinkfun = function (family, link) 
+  {
+    if (family == "cumulative") {
+      linkfun <- makeLinkCumulative(link)
+    }
+    else if (family == "sratio") {
+      linkfun <- makeLinkRatio(link, stopping = TRUE)
+    }
+    else if (family == "cratio") {
+      linkfun <- makeLinkRatio(link, stopping = FALSE)
+    }
+    else if (family == "acat") {
+      linkfun <- makeLinkACAT(link)
+    }
+    linkfun
+  }
+  
+  
+  #----------------------------
+  # makeLinkCumulative
+  #----------------------------
+  makeLinkCumulative = function (link) 
+    
+  {
+    lf <- stats::make.link(link)
+    tt <- function(p) cumsum(p)
+    ttinv <- function(delta) delta - c(0, delta[-length(delta)])
+    ttinvprime <- function(delta) {
+      k <- length(delta)
+      ttipDiag <- diag(1, nrow = k)
+      ttipOffDiag <- cbind(-ttipDiag[, -1], 0)
+      ttip <- ttipDiag + ttipOffDiag
+      ttip
+    }
+    g <- function(p) lf$linkfun(tt(p))
+    h <- function(eta) ttinv(lf$linkinv(eta))
+    getQ <- function(eta) rep(lf$mu.eta(eta), each = length(eta)) * 
+      ttinvprime(lf$linkinv(eta))
+    list(g = g, h = h, getQ = getQ)
+  }
+  
+  
+  
+  #----------------------------
   if (!is.null(customLink)) {
     link <- customLink
     message("customLink should be a list containing:\n\n                  $linkfun := vectorized link function with domain (0, 1)\n\n                  $linkinv := vectorized inverse link with domain (-Inf, Inf)\n\n                  $mu.eta  := vectorized Jacobian of linkinv\n\n                The customLink argument is not checked, so user should be cautious\n                using it.")
@@ -95,7 +142,37 @@ function (x, y,
   else {
     xStd <- t(t(x) - xMeans)
   }
+  
+  
+  
+  
+  
+  #------------------
+  # makexList
+  #------------------
+  makexList = function (x, nLev, parallelTerms, nonparallelTerms) 
+  {
+    x1 <- diag(nLev - 1)
+    xList <- lapply(1:nrow(x), function(i) {
+      xi <- x[i, ]
+      x2 <- if (!parallelTerms) 
+        NULL
+      else rbind(xi)[rep(1, nLev - 1), , drop = FALSE]
+      x3 <- if (!nonparallelTerms) 
+        NULL
+      else makeNonparallelBlock(xi, nLev)
+      xListi <- cbind(x1, x2, x3)
+      rownames(xListi) <- NULL
+      xListi
+    })
+    xList
+  }
   xList <- makexList(xStd, nLev, parallelTerms, nonparallelTerms)
+  
+  
+  
+  
+  
   
   
   #=============================================================================
@@ -127,6 +204,44 @@ function (x, y,
   #=============================================================================
   # cdOut
   #=============================================================================
+  getLoglik = function (pMat, yMat) 
+  {
+    pkplusone <- 1 - rowSums(pMat)
+    pMatFull <- cbind(pMat, pkplusone)
+    if (any(pMatFull < 0)) 
+      return(-Inf)
+    llMat <- yMat * log(pMatFull)
+    llMat[yMat == 0] <- 0
+    llik <- sum(llMat)
+    llik
+  }
+  
+  
+  
+  
+  
+  #=============================================================================
+  # cdOut
+  #=============================================================================
+  getPenalty = function (betaHat, lambdaMod, alpha) 
+  {
+    lambdaMod[betaHat == 0] <- 0
+    l1 <- sum(abs(betaHat) * lambdaMod)
+    l22 <- sum(betaHat^2 * lambdaMod)
+    pen1 <- alpha * l1
+    pen2 <- 0.5 * (1 - alpha) * l22
+    pen <- pen1 + pen2
+    pen
+  }
+  
+  
+  
+  
+  
+  
+  #=============================================================================
+  # cdOut
+  #=============================================================================
   cdOut = function (betaHat, lambdaIndex, lambdaNum, lambdaMod, xList, 
                     xMat, yMat, alpha, positiveID, linkfun, pMin, threshOut, 
                     threshIn, maxiterOut, maxiterIn, printIter, printBeta) 
@@ -143,8 +258,7 @@ function (x, y,
     betaNonzeroIndex <- which(betaHat != 0)
     etaMat <- matrix(xMat[, betaNonzeroIndex, drop = FALSE] %*% 
                        betaHat[betaNonzeroIndex], nrow = nObs, byrow = TRUE)
-    pMat <- do.call(rbind, lapply(1:nrow(etaMat), function(i) linkfun$h(etaMat[i, 
-    ])))
+    pMat <- do.call(rbind, lapply(1:nrow(etaMat), function(i) linkfun$h(etaMat[i,])))
     
     
     
@@ -155,6 +269,49 @@ function (x, y,
     penalty <- getPenalty(betaHat, lambdaMod, alpha)
     
     obj <- -loglik/wtsum + penalty
+    
+    
+    
+    
+    #---------------------------------------------------
+    #
+    #---------------------------------------------------
+    getScoreInfo = function (xList, yMat, pMat, pMin, linkfun) 
+    {
+      nObs <- length(xList)
+      nCoef <- ncol(xList[[1]])
+      nLev <- ncol(yMat)
+      pMatFull <- cbind(pMat, 1 - rowSums(pMat))
+      pMatFull[pMatFull < pMin] <- pMin
+      pMatFull <- pMatFull/rowSums(pMatFull)
+      pkplusone <- pMatFull[, nLev]
+      pMat <- pMatFull[, -nLev, drop = FALSE]
+      d <- yMat[, nLev]/pkplusone
+      d[yMat[, nLev] == 0] <- 0
+      uMat <- yMat[, -nLev, drop = FALSE]/pMat
+      uMat[yMat[, -nLev] == 0] <- 0
+      uminusdMat <- uMat - d
+      wts <- if (is.null(attr(yMat, "wts"))) 
+        rowSums(yMat)
+      else attr(yMat, "wts")
+      wpMat <- wts/pMat
+      wpkplusone <- wts/pkplusone
+      score <- rep(0, nCoef)
+      info <- matrix(0, nrow = nCoef, ncol = nCoef)
+      for (i in 1:nObs) {
+        x <- xList[[i]]
+        uminusd <- uminusdMat[i, ]
+        eta <- linkfun$g(pMat[i, ])
+        q <- linkfun$getQ(eta)
+        score <- score + crossprod(x, crossprod(q, uminusd))
+        sigInv <- diag(wpMat[i, ], nrow = nLev - 1) + wpkplusone[i]
+        w <- crossprod(q, sigInv) %*% q
+        info <- info + crossprod(x, w %*% x)
+      }
+      score <- c(score)
+      list(score = score, info = info)
+    }
+    
     
     
     

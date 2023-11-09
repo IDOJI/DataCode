@@ -65,14 +65,14 @@ Smoothing.list = lapply(path_Data_SB_FDA_Euclidean_Smoothing, readRDS) %>% setNa
 # functional PCA
 #===============================================================================
 FPCA.list = lapply(seq_along(Smoothing.list), function(k){
-  
   kth_Smoothing = Smoothing.list[[k]]
   
   kth_Regions = names(kth_Smoothing)
   
   tictoc::tic()
-  
+
   kth_FPCA = lapply(seq_along(kth_Smoothing), function(i){
+    
     FDA___fPCA(fdobj = kth_Smoothing[[i]]$smoothing$fd, 
                threshold = 0.9, 
                # path_Export = paste0(path_Data_SB_FDA_Euclidean__FPCA, "/", basename(path_Data_SB_FDA_Euclidean_Smoothing)[k] %>% tools::file_path_sans_ext()), 
@@ -88,8 +88,6 @@ FPCA.list = lapply(seq_along(Smoothing.list), function(k){
   cat("\n", paste0(crayon::bgRed(basename(path_Data_SB_FDA_Euclidean_Smoothing)[k]), crayon::green(" is done!")) ,"\n")
   return(kth_FPCA)
 })
-
-
 
 
 
