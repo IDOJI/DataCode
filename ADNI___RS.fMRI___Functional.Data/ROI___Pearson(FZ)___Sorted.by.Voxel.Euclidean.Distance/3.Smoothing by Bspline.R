@@ -190,7 +190,7 @@ Smoothing_2.list = lapply(seq_along(Subjects_List), function(k){
 #===============================================================================
 path_Smoothing = list.files(path_Data_SB_FDA_Euclidean, full.names = T, pattern = "Smoothing")
 path_Smoothing_Folders = path_Smoothing %>% list.files(full.names=T)
-Folders = path_Smoothing %>% list.files(full.names=F)
+Folders = path_Smoothing %>% list.files(full.names=F) %>% tools::file_path_sans_ext()
 
 for(n in 1:length(Folders)){
   
