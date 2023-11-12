@@ -1,4 +1,4 @@
- ##############################################################################################
+##############################################################################################
 # 0. Loading functions
 ##############################################################################################
 # rm(list=ls())
@@ -38,11 +38,10 @@ path_Data_SB_FDA_Euclidean = list.files(path_Data_SB_FDA, full.names = T, patter
 # Files
 path_Subjects = list.files(path_Data_SB_FDA_Euclidean, full.names=T, pattern = "Subjects") %>% list.files(full.names=T, pattern = "\\.rds$")
 path_Scores = list.files(path_Data_SB_FDA_Euclidean, full.names=T, pattern = "Scores") %>% list.files(full.names=T, pattern = "\\.rds$")
+path_Export = paste0(path_Data_SB_FDA_Euclidean, "/", "Final_Combined")
 
 # File names
-Names_Subjects = basename(path_Subjects) %>% tools::file_path_sans_ext()
 Names_Scores = basename(path_Scores) %>% tools::file_path_sans_ext()
-
 
 
 
@@ -52,76 +51,50 @@ Names_Scores = basename(path_Scores) %>% tools::file_path_sans_ext()
 #===============================================================================
 # Loading Data
 #===============================================================================
-Subjects = lapply(path_Subjects, readRDS) %>% setNames(Names_Subjects)
+Subjects = readRDS(path_Subjects)
+Names_Subjects_Lists = names(Subjects)
+
 Scores = lapply(path_Scores, readRDS) %>% setNames(Names_Scores)
-
-
-
-
-
-
-
-#===============================================================================
-# Test
-#===============================================================================
-Scores$
-
-
-
-
-
-
-
-# Group Numbering
-fPCA_Scores_GroupNum_1 = fPCA_Scores_1$Features_Group_Nums
-fPCA_Scores_GroupNum_2 = fPCA_Scores_2$Features_Group_Nums
-
-
-# Scores
-fPCA_Scores_1 = fPCA_Scores_1$fPCA_Scores
-fPCA_Scores_2 = fPCA_Scores_2$fPCA_Scores
-names(fPCA_Scores_2) = paste0("Global___", names(fPCA_Scores_2))
-
-
-
-
-# FunImgARCWSF
-Combined_1 = bind_cols(Subjects_Selected, fPCA_Scores_1)
-Combined_1 = list(Data = Combined_1, Features_Group_Nums = fPCA_Scores_GroupNum_1)
-saveRDS(Combined_1, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARCWSF.rds"))
-
-
-
-# FunImgARglobalCWSF
-Combined_2 = bind_cols(Subjects_Selected, fPCA_Scores_2)
-Combined_2 = list(Data = Combined_2, Features_Group_Nums = fPCA_Scores_GroupNum_2)
-saveRDS(Combined_2, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARglobalCWSF.rds"))
-
-
-
-# +global (서로 다른 그룹으로 취급)
-Combined_3 = bind_cols(Subjects_Selected, fPCA_Scores_1, fPCA_Scores_2)
-Combined_3 = list(Data = Combined_3, Features_Group_Nums = c(fPCA_Scores_GroupNum_1, length(fPCA_Scores_GroupNum_1) + fPCA_Scores_GroupNum_2))
-saveRDS(Combined_3, file = paste0(path_Data_SB_FDA_Euclidean, "/Combined___FunImgARCWSF + FunImgARglobalCWSF___Diff.rds"))
-
-
-# 서로 같은 그룹 취급
-
+Names_Scores = names(Scores)
 
 
 
 
 
 #===============================================================================
-# Subjects list
+# Combining
 #===============================================================================
-lapply(Smoothing.list, function(ith_Smoothing){
-  ith_RID = ith_Smoothing$ACC_pre_L$smoothing$y %>% colnames
+fs::dir_create(path_Export, recurse = T)
+
+Combined.list = lapply(seq_along(Scores), function(i){
   
-})
+  ith_Score_Name = str_split(Names_Scores[i], "___")[[1]][2]
+  
+  # Subjects list
+  if(grep("_NA", ith_Score_Name, ignore.case = T) %>% length > 0){
+    ith_Subject_List = Subjects[[which(ith_Score_Name == Names_Subjects_Lists)]]
+  }else{
+    ith_Subject_List = Subjects[[which(ith_Score_Name == Names_Subjects_Lists)]] %>% dplyr::select(DEMO___DIAGNOSIS_NEW)
+  }
+  
+  
+  ith_Scores = Scores[[i]]$fPCA_Scores
+  
+  ith_VarGroupNums = Scores[[i]]$Features_Group_Nums
+  
+  
+  # Combine
+  ith_Combined = cbind(ith_Subject_List, ith_Scores)
+  
+  ith_Combined.list = list(Combined = ith_Combined, VarGroupNums = ith_VarGroupNums)  
+  
+  saveRDS(ith_Combined.list, paste0(path_Export, "/", Names_Scores[i], ".rds"))
+  
+  ith_Combined.list
+  
+}) %>% setNames(Names_Scores)
 
-path_Data_SB_FDA_Euclidean_SubjectsList = list.files(path_Data_SB_FDA_Euclidean, full.names=T, pattern = "Subjects") %>% list.files(full.names=T)
-Subjects = readRDS(path_Data_SB_FDA_Euclidean_SubjectsList)
+
 
 
 

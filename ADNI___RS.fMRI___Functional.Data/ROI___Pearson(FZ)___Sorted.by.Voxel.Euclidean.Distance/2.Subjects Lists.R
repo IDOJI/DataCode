@@ -76,7 +76,10 @@ Subjects_Full = Subjects %>%
                 DEMO___SEX, 
                 DEMO___AGE,
                 DEMO___ADNIMERGE___APOE4, 
+                DEMO___ADNIMERGE___PTEDUCAT,
                 DEMO___MMSE___MMSCORE,
+                PTDEMO___PTHAND
+                # DEMO___ADNIMERGE___PTMARRY
                 # NFQ___BAND.TYPE,
                 # VISCODE2
                 ) %>% 
@@ -85,15 +88,20 @@ Subjects_Full = Subjects %>%
     DEMO___DIAGNOSIS_NEW %in% c("LMCI", "EMCI") ~ "MCI",
     TRUE ~ DEMO___DIAGNOSIS_NEW
   )) %>% 
+  # dplyr::mutate(DEMO___ADNIMERGE___PTMARRY = factor(DEMO___ADNIMERGE___PTMARRY)) %>% 
   dplyr::mutate(DEMO___SEX = case_when(
     DEMO___SEX == "Male" ~ 1,
+    TRUE ~ 0
+  )) %>% 
+  dplyr::mutate(PTDEMO___PTHAND = case_when(
+    PTDEMO___PTHAND == "Right" ~ 1,
     TRUE ~ 0
   )) %>% 
   dplyr::arrange(RID) %>% 
   dplyr::mutate(RID = paste0("RID_", sprintf("%04d", RID))) %>% 
   dplyr::filter(RID %in% RID_FC) %>% 
-  dplyr::mutate(DEMO___DIAGNOSIS_NEW = factor(DEMO___DIAGNOSIS_NEW, levels = c("CN", "MCI", "AD"))) %>% 
-  as_tibble
+  dplyr::mutate(DEMO___DIAGNOSIS_NEW = factor(DEMO___DIAGNOSIS_NEW, levels = c("CN", "MCI", "AD")))
+
 
 
 
