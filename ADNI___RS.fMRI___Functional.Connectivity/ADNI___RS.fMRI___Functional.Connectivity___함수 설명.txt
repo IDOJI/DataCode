@@ -1,7 +1,0 @@
-# ADNI___RS.fMRI___Functional.Connectivity___Static___Extractor
-DPABI results에서 FC 추출 (Raw, FisherZ)w
-
-
-# Dynamic Functional Connectivity 계산 - ROI
-ADNI___RS.fMRI___Functional.Connectivity___Dynamic___ROI
-
