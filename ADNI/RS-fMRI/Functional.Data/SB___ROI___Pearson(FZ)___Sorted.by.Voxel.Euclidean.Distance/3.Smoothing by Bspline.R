@@ -29,45 +29,35 @@ list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>
 #===============================================================================
 # Path
 #===============================================================================
-path_Data_Subject = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Subjects.Lists")
-path_Data_BOLD = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___BOLD.Signals")
-path_Data_FC = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Functional.Connectivity")
-path_Data_SB_FDA = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___SB___Functional.Data")
-path_Data_SB_FDA_Euclidean = list.files(path_Data_SB_FDA, full.names = T, pattern = "")
-path_SubjectsList = path_Data_SB_FDA_Euclidean %>% list.files(full.names=T, pattern = "Subjects_List") %>% list.files(full.names=T)
+path_Data = paste0(path_OS, "Dropbox/Data")
+path_Data_ADNI = list.files(path_Data, pattern = "ADNI", full.names = T)
+
+path_Data_BOLD = list.files(path_Data_ADNI, pattern = "BOLD", full.names = T)
+path_Data_FC = list.files(path_Data_ADNI, pattern = "Connectivity", full.names = T)
+path_Data_FDA = list.files(path_Data_ADNI, pattern = "Functional.Data", full.names = T)
+
+path_Data_FDA_Euclidean = list.files(path_Data_FDA, patter = "Euclidean", full.names = T)
+path_Data_FDA_Euclidean_Subjects = list.files(path_Data_FDA_Euclidean, pattern = "Subject", full.names=T) %>% list.files(full.names=T)
 
 # path save
-path_Save_All = paste0(path_Data_SB_FDA_Euclidean, "/", "All")
-path_Save_ADMCI = paste0(path_Data_SB_FDA_Euclidean, "/", "ADMCI")
-path_Save_ADCN = paste0(path_Data_SB_FDA_Euclidean, "/", "ADCN")
-path_Save_MCICN = paste0(path_Data_SB_FDA_Euclidean, "/", "MCICN")
-
-
-
-
-
-
+path_Save_All = paste0(path_Data_FDA_Euclidean, "/", "All")
+path_Save_ADMCI = paste0(path_Data_FDA_Euclidean, "/", "ADMCI")
+path_Save_ADCN = paste0(path_Data_FDA_Euclidean, "/", "ADCN")
+path_Save_MCICN = paste0(path_Data_FDA_Euclidean, "/", "MCICN")
 
 
 
 #===============================================================================
 # Load Subjects
 #===============================================================================
-Subjects_List = readRDS(path_SubjectsList)
-
-
-
-
-
-
-
+Subjects_List = readRDS(path_Data_FDA_Euclidean_Subjects)
 
 
 
 #===============================================================================
 # Load FC Data
 #===============================================================================
-path_Data = list.files(path_Data_SB_FDA, full.names=T, pattern = "Euclidean") %>% 
+path_Data = list.files(path_Data_FDA, full.names=T, pattern = "Euclidean") %>% 
   list.files(pattern = "Sorted", full.names = T) %>% 
   list.files(pattern = "\\.rds$", full.names = T)
 

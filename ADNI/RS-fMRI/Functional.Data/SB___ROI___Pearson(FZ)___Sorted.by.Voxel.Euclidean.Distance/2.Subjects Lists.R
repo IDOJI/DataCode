@@ -15,10 +15,27 @@ require(tidyverse)
 require(dplyr)
 require(clipr)
 require(fda)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/ADNIprep/R"), full.names = T) %>% walk(source)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/StatsR/R"), full.names = T) %>% walk(source)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>% walk(source)
 #=============================================================================================
+path_Dropbox = paste0(path_OS, "Dropbox")
+path_GitHub = list.files(path_Dropbox, pattern = "Github", full.names = T)
+path_Rpkgs = list.files(path_GitHub, pattern = "Rpkgs", full.names = T)
+Rpkgs = c("ADNIprep", "StatsR", "refineR")
+Load = sapply(Rpkgs, function(y){
+  list.files(paste0(path_Rpkgs, "/", y, "/R"), full.names = T) %>% walk(source) 
+})
+#=============================================================================================
+path_Data = paste0(path_Dropbox, "/Data")
+path_ADNI = list.files(path_Data, full.names = T, pattern = "ADNI")
+path_Subjects = list.files(path_ADNI, full.names = TRUE, pattern = "Subjects.Lists") %>% 
+  list.files(., full.names = TRUE) %>%
+  grep("Subjects_Lists_Exported$", ., value = TRUE) %>% 
+  list.files(., full.names = TRUE) %>% 
+  grep("Final$", ., value = TRUE) %>% 
+  list.files(., full.names = TRUE) %>% 
+  grep("list.csv$", ., value  =TRUE)
+path_FD = list.files(path_ADNI, full.names = T, pattern = "Functional.Data")
+#=============================================================================================
+
 
 
 
@@ -29,14 +46,12 @@ list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>
 #===============================================================================
 # Path
 #===============================================================================
-path_Data_Subject = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Subjects.Lists")
-path_Data_BOLD = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___BOLD.Signals")
-path_Data_FC = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Functional.Connectivity")
-path_Data_SB_FDA = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___SB___Functional.Data")
-path_Data_SB_FDA_Euclidean = list.files(path_Data_SB_FDA, full.names = T, pattern = "")
+path_Euclidean = list.files(path_FD, pattern = "Euclidean", full.names = T)
+path_Euclidean_SortedFC = list.files(path_Euclidean, pattern = "Sorted", full.names = T) %>% 
+  list.files(., full.names = TRUE, pattern = "\\.rds$") %>% 
+  grep("___FunImgAR", ., value = TRUE)
 
-path_Save = paste0(path_Data_SB_FDA_Euclidean, "/", "Subjects_List")
-
+path_Save = paste0(path_Euclidean, "/Subjects_List_Splitted")
 
 
 
@@ -44,18 +59,9 @@ path_Save = paste0(path_Data_SB_FDA_Euclidean, "/", "Subjects_List")
 
 
 #===============================================================================
-# Load FC Data
+# Extract RID from FC data
 #===============================================================================
-path_SortedFC = list.files(path_Data_SB_FDA, full.names=T, pattern = "Euclidean") %>% list.files(full.names=T, pattern = "Sorted")
-path_Data = list.files(path_SortedFC, full.names=T, pattern = "\\.rds$")
-Data_1 = readRDS(path_Data[1])
-Data_2 = readRDS(path_Data[2])
-
-Data.list = list(Data_1, Data_2)
-
-RID_FC = Data_1[[1]] %>% colnames
-
-
+RID_FC = readRDS(path_Euclidean_SortedFC[1])[[1]] %>% colnames
 
 
 
@@ -66,7 +72,7 @@ RID_FC = Data_1[[1]] %>% colnames
 #===============================================================================
 # Subjects
 #===============================================================================
-Subjects = read.csv(paste0(path_Data_Subject, "/Subjects_Lists_Exported/Final/[Final_Selected]_Subjects_list.csv"))
+Subjects = read.csv(path_Subjects)
 
 # Intersection with FC
 Subjects_Full = Subjects %>% 
@@ -106,8 +112,13 @@ Subjects_Full = Subjects %>%
 
 
 
+
+
+
+
+
 #===============================================================================
-# Extract
+# Subset by Disease Group
 #===============================================================================
 Subjects_List.list = list()
 # AD MCI CN
@@ -129,10 +140,28 @@ names(Subjects_List.list) = c("Subjects_Full", "Subjects_Full_NA",
                               "Subjects_MCICN", "Subjects_MCICN_NA")
 
 
+
+
+
+
+
 #===============================================================================
-# Export
+# Splitting by "Diagnosis" maintaining proportion
 #===============================================================================
-saveRDS(Subjects_List.list, paste0(path_Save, "/Subjects_List.rds"))
+fs::dir_create(path_Save, recurse = T)
+
+for(i in 1:length(Subjects_List.list)){
+  
+  ith_Splitted_Data = SUB___Fold(Data = Subjects_List.list[[i]], Var_1 = "DEMO___DIAGNOSIS_NEW", y_Var = "DEMO___DIAGNOSIS_NEW")
+  
+  saveRDS(ith_Splitted_Data, paste0(path_Save, "/", names(Subjects_List.list)[i], ".rds"))
+  
+}
+
+
+
+
+
 
 
 

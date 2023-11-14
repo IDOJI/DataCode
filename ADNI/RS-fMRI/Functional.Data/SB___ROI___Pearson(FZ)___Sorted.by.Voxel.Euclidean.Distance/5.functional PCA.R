@@ -15,10 +15,28 @@ require(tidyverse)
 require(dplyr)
 require(clipr)
 require(fda)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/ADNIprep/R"), full.names = T) %>% walk(source)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/StatsR/R"), full.names = T) %>% walk(source)
-list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>% walk(source)
 #=============================================================================================
+path_Dropbox = paste0(path_OS, "Dropbox")
+path_GitHub = list.files(path_Dropbox, pattern = "Github", full.names = T)
+path_Rpkgs = list.files(path_GitHub, pattern = "Rpkgs", full.names = T)
+Rpkgs = c("ADNIprep", "StatsR", "refineR")
+Load = sapply(Rpkgs, function(y){
+  list.files(paste0(path_Rpkgs, "/", y, "/R"), full.names = T) %>% walk(source) 
+})
+#=============================================================================================
+path_Data = paste0(path_Dropbox, "/Data")
+path_ADNI = list.files(path_Data, full.names = T, pattern = "ADNI")
+path_Subjects = list.files(path_ADNI, full.names = T, pattern = "Subjects.Lists")
+path_FD = list.files(path_ADNI, full.names = T, pattern = "Functional.Data")
+#=============================================================================================
+
+
+
+
+
+
+
+
 
 
 
@@ -28,13 +46,31 @@ list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>
 #===============================================================================
 # Path
 #===============================================================================
-path_Data = paste0(path_OS, "Dropbox/Data")
-path_Data_FDA = list.files(path_Data, pattern = "Functional.Data", ignore.case = T, full.names=T)
-path_Data_FDA_Euclidean = list.files(path_Data_FDA, full.names = T, pattern = "Euclidean")
+path_FD_Euclidean = list.files(path_FD, full.names = T, pattern = "Euclidean")
+path_FD_Smoothing = list.files(path_FD_Euclidean, full.names = T, pattern = "Smoothing")
+path_FD_Subjects = list.files(path_FD_Euclidean, full.names = T, pattern = "Splitted")
 
-path_Data_FDA_Euclidean_Smoothing = list.files(path_Data_FDA_Euclidean, full.names=T, pattern = "Smoothing") %>% list.files(full.names=T, pattern = "\\.rds$")
-path_Data_FDA_Euclidean_FPCA = paste0(path_Data_FDA_Euclidean, "/FPCA")
-path_Data_FDA_Euclidean_FPCA_Scores = paste0(path_Data_SB_FDA_Euclidean, "/FPCA_Scores_With_Group_Nums")
+
+
+# Files
+path_Smoothing = list.files(path_FD_Smoothing, full.names=T, pattern = "\\.rds$")
+path_Subjects = list.files(path_FD_Subjects, full.names=T, pattern = "\\.rds$")
+
+# Names
+Names_Smoothing = basename(path_Smoothing) %>% 
+  tools::file_path_sans_ext()
+Names_Subjects = basename(path_Subjects) %>% 
+  tools::file_path_sans_ext() %>% 
+  gsub(pattern = "___Splitted", replacement = "")
+
+
+
+# Save
+path_FPCA = paste0(path_FD_Euclidean, "/FPCA")
+path_FPCA_Scores = paste0(path_FD_Euclidean, "/FPCA_Scores_With_Group_Nums")
+
+
+
 
 
 
@@ -42,7 +78,43 @@ path_Data_FDA_Euclidean_FPCA_Scores = paste0(path_Data_SB_FDA_Euclidean, "/FPCA_
 #===============================================================================
 # Loading smoothing Data
 #===============================================================================
-Smoothing.list = lapply(path_Data_SB_FDA_Euclidean_Smoothing, readRDS) %>% setNames( basename(path_Data_SB_FDA_Euclidean_Smoothing) %>% tools::file_path_sans_ext())
+Smoothing.list = lapply(path_Smoothing, readRDS) %>% setNames(Names_Smoothing)
+Subjects.list = lapply(path_Subjects, readRDS) %>% setNames(Names_Subjects)
+
+
+
+
+
+
+
+
+
+#===============================================================================
+# Split B-spline data by Train & Test
+#===============================================================================
+Splitted_Bspline.list = list()
+for(k in 1:length(Smoothing.list)){
+  
+  which_Sub_Ind = which(Names_Subjects == sub(".*___", "", Names_Smoothing[k]))
+  kth_Subjects = Subjects.list[[which_Sub_Ind]]
+  
+  # Extract RID
+  kth_Train_RID = kth_Subjects$Train_X$RID
+  kth_Test_RID = kth_Subjects$Test_X$RID
+  
+  # Split B-spline for each region
+  lapply(Smoothing.list[[k]], function(y){
+    y$smoothing$gcv
+  })
+  
+  
+}
+
+
+
+
+
+
 
 
 
