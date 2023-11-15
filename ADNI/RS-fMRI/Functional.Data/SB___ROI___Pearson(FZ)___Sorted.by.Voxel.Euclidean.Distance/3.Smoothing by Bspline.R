@@ -59,6 +59,9 @@ path_SortedFC = path_Euclidean %>%
 Names_SortedFC = path_SortedFC %>% basename_sans_ext()
 
 
+path_Smoothing = list.files(path_Euclidean, pattern = "Smoothing", full.names = T)
+
+
 
 
 
@@ -137,7 +140,7 @@ for(i in seq_along(SortedFC.list)){
                                        labmdas =  exp(seq(-5, -4, 0.1)),
                                        m_int2Lfd = 2,
                                        argvals = kth_x), 
-                        path_Export = paste0(path_Euclidean, "/Smoothing/", ith_Pipeline, "___", jth_Subject_List_Name), 
+                        path_Export = paste0(path_Smoothing, "/", ith_Pipeline, "___", jth_Subject_List_Name), 
                         file.name = paste0(names(kth_y_Combined)[n], "___", kth_Brain_Name))  
       })
     }
@@ -151,86 +154,34 @@ for(i in seq_along(SortedFC.list)){
 
 
 
-  
-
-
-
-
-  
-
-
-
-
-# #===============================================================================
-# # Smoothing : FunImgARCWSF
-# #===============================================================================
-# File_Names = paste0(, names(Subjects_List))
-# 
-# Smoothing_1.list = lapply(seq_along(Subjects_List), function(k){
-#   Smoothing_Function(RID = Subjects_List[[k]]$RID,
-#                      FC = Data_1, 
-#                      path_Export = path_Data_SB_FDA_Euclidean, 
-#                      File_Name = File_Names[k],
-#                      lambdas =) %>% suppressWarnings()
-# })
-# 
-# 
-# 
-# 
-# #===============================================================================
-# # Smoothing : FunImgARglobalCWSF
-# #===============================================================================
-# File_Names = paste0("FunImgARglobalCWSF___", names(Subjects_List))
-# 
-# Smoothing_2.list = lapply(seq_along(Subjects_List), function(k){
-#   Smoothing_Function(RID = Subjects_List[[k]]$RID,
-#                      FC = Data_2, 
-#                      path_Export = path_Data_SB_FDA_Euclidean, 
-#                      File_Name = File_Names[k],
-#                      lambdas = exp(seq(-5, -4, 0.1))) %>% suppressWarnings()
-# })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #===============================================================================
 # Combining Results
 #===============================================================================
-path_Smoothing = list.files(path_Data_SB_FDA_Euclidean, full.names = T, pattern = "Smoothing")
-path_Smoothing_Folders = path_Smoothing %>% list.files(full.names=T)
-Folders = path_Smoothing %>% list.files(full.names=F) %>% tools::file_path_sans_ext()
+path_Smoothed_Folders = list.files(path_Smoothing, full.names = T)
+Names_Smoothed_Folders = path_Smoothed_Folders %>% basename_sans_ext()
 
-for(n in 1:length(Folders)){
+for(i in seq_along(path_Smoothed_Folders)){
+  tictoc::tic()
+  pattern.vec = c("Train", "Test")
   
-  path_nth_Each_Brain_Regions = list.files(path_Smoothing_Folders[n], full.name=T, pattern = "\\.rds")
-  
-  nth_Each_Brain_Regions = list.files(path_Smoothing_Folders[n], full.name=F, pattern = "\\.rds") %>% tools::file_path_sans_ext()
-  
-  nth_Smoothed_Data = lapply(path_nth_Each_Brain_Regions, readRDS) %>% setNames(nth_Each_Brain_Regions)
-  
-  saveRDS(nth_Smoothed_Data, paste0(path_Smoothing, "/" , Folders[n], ".rds"))
+  Results = sapply(pattern.vec, function(kth_pattern){
+    
+    
+    ith_Files = list.files(path_Smoothed_Folders[i], full.names = T, pattern = kth_pattern) %>% 
+      grep("\\.rds$", ., value = T)
+    
+    ith_Files_Names = ith_Files %>% 
+      basename_sans_ext() %>% 
+      gsub(pattern = "Train___", replacement = "", x = .)
+    
+    ith_Combined = lapply(ith_Files, readRDS) %>% setNames(ith_Files_Names)
+    
+    saveRDS(ith_Combined, file = paste0(path_Smoothing, "/", Names_Smoothed_Folders[i], "___", kth_pattern, ".rds"))
+    
+  })
+  tictoc::toc()
 }
-
-
-
-
-
-
 
 
 
