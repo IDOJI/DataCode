@@ -89,6 +89,8 @@ path_Subjects = c(path_Subjects, path_Subjects)
 
 
 
+
+
 #===============================================================================
 # Combine Train, Test and Subjects
 #===============================================================================
@@ -118,7 +120,9 @@ Combined = lapply(seq_along(Scores_Train), function(k){
   kth_Subjects.list$Test_X_FeaturesGroupsNums = kth_Scores_Test$Features_Group_Nums
   
   # Exporting
-  saveRDS(kth_Subjects.list, file = paste0())
+  # path_Export = paste0(path_Euclidean, "/Combined Data")
+  # dir.create(path_Export, F)
+  saveRDS(kth_Subjects.list, file = paste0(path_Export, "/Combiend___", Names_Scores_Files[k], ".rds"))
 })
 
 
