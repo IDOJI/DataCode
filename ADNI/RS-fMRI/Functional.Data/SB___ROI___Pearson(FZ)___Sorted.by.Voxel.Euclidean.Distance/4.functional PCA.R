@@ -181,7 +181,7 @@ FPCA_Train.list = lapply(path_FPCA_Train, readRDS) %>% setNames(Names_FPCA_Train
 
 
 #===============================================================================
-# Exporting fPCA scores for Train
+# Exporting fPCA scores for Test
 #===============================================================================
 for(i in seq_along(FPCA_Train.list)){
   tictoc::tic()
@@ -192,12 +192,15 @@ for(i in seq_along(FPCA_Train.list)){
   
   ith_Scores_Group_Num = c()
   
+  # Computer inner product for each Brain Region
   ith_Scores_Test = lapply(seq_along(ith_FPCA_Train), function(j){
-  
+    # FPCA results from Train  
     ijth_Region_FCPA_Train = ith_FPCA_Train[[j]]
-    ijth_Region_Smoothing_Test = ith_Smoothing_Test[[j]]
+  
+    # centering before eigenvalue decomposition
+    ijth_Region_Smoothing_FD_Centered_Test = center.fd(ith_Smoothing_Test[[j]]$smoothing$fd) 
     
-    ijth_Scores_Test = fda::inprod(fdobj1 = ijth_Region_Smoothing_Test$smoothing$fd, 
+    ijth_Scores_Test = fda::inprod(fdobj1 = ijth_Region_Smoothing_FD_Centered_Test, 
                                    fdobj2 = ijth_Region_FCPA_Train$harmonics)
     
     colnames(ijth_Scores_Test) = paste0(ith_BrainRegion[j], "___",  1:ncol(ijth_Scores_Test))
@@ -205,35 +208,42 @@ for(i in seq_along(FPCA_Train.list)){
     ith_Scores_Group_Num <<- c(ith_Scores_Group_Num, rep(j, times = ncol(ijth_Scores_Test)))
     
     return(ijth_Scores_Test)
-  }) %>% setNames(names(ith_FPCA_Train))
+  }) %>% setNames(names(ith_FPCA_Train)) %>% do.call(cbind, .) %>% as.data.frame()
   
   
-  saveRDS(ith_Scores_Test, file = paste0(path_FPCA, "/Scores___", Names_Smoothed_Files[i], "___Test.rds"))
+  saveRDS(list(Scores = ith_Scores_Test, Features_Group_Nums = ith_Scores_Group_Num), 
+               file = paste0(path_FPCA, "/Scores___", Names_Smoothed_Files[i], "___Test.rds"))
   tictoc::toc()
 }
 
-# 
-# 
-# path_Smooothing = list.files(path_Euclidean, pattern = "Smoothing", full.names=T) %>% 
+
+
+
+
+
+
+
+# path_Smooothing = list.files(path_Euclidean, pattern = "Smoothing", full.names=T) %>%
 #   list.files(pattern = "FunImgARCWSF___Subjects_ADCN___Train.rds", full.names=T)
+# 
 # Smoothing_Train = path_Smooothing %>% readRDS
-# Smoothing = Smoothing_Train$ACC_pre_L
+# ACC_Smoothing = Smoothing_Train$ACC_pre_L$smoothing
 # 
 # 
 # 
 # path_FPCA_New = list.files(path_FPCA, pattern = "FPCA___FunImgARCWSF___Subjects_ADCN___Train.rds", full.names=T)
 # FPCA_new = path_FPCA_New %>% readRDS
-# FPCA_new = FPCA_new$ACC_pre_L
-# 
-# Scores_1 = fda::inprod(FPCA_new$harmonics, Smoothing$smoothing$fd) %>% as.data.frame
-# Scores_2 = fda::inprod(Smoothing$smoothing$fd, FPCA_new$harmonics) %>% as.data.frame
+# ACC_FPCA = FPCA_new$ACC_pre_L
 # 
 # 
-# 
-# 
-# 
-# 
-# 
+# center.fd(functionalData)
+# Scores = inprod(center.fd(ACC_Smoothing$fd), ACC_FPCA$harmonics) %>% as.data.frame
+# cbind(Scores[1,] %>% unlist, ACC_FPCA$scores[1,])
+
+
+
+
+
 
 
 

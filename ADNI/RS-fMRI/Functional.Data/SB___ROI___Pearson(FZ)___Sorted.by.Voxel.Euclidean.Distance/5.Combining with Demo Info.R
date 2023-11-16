@@ -56,6 +56,7 @@ path_FPCA = list.files(path_Euclidean, pattern = "FPCA", full.names=TRUE)
 
 
 
+
 #===============================================================================
 # Path
 #===============================================================================
@@ -76,6 +77,10 @@ Names_Scores_Files = paste0(Names_Scores_Pipeline, "___", Names_Scores_Subjects)
 
 # Subject
 path_Subjects = list.files(path_Euclidean, pattern = "Subjects", full.names=T) %>% list.files(full.names = T)
+path_Subjects = c(path_Subjects, path_Subjects)
+# Names_Subjects = path_Subjects %>% basename_sans_ext()
+
+
 
 
 
@@ -85,76 +90,36 @@ path_Subjects = list.files(path_Euclidean, pattern = "Subjects", full.names=T) %
 
 
 #===============================================================================
-# Combine Train and Test
+# Combine Train, Test and Subjects
 #===============================================================================
+# Load subject
+Subjects.list = lapply(path_Subjects, readRDS) %>% setNames(Names_Scores_Files)
+
+# Load Train
 Scores_Train = lapply(path_Scores_Train, readRDS) %>% setNames(Names_Scores_Files)
+
+# Load Test
 Scores_Test = lapply(path_Scores_Test, readRDS) %>% setNames(Names_Scores_Files)
 
-lapply(seq_along(Scores_Train), function(k){
+
+# Export
+Combined = lapply(seq_along(Scores_Train), function(k){
   
+  kth_Subjects.list = Subjects.list[[k]]
+  kth_Scores_Train = Scores_Train[[k]]
+  kth_Scores_Test = Scores_Test[[k]]
   
+  # Extract scores
+  kth_Subjects.list$Train_X = cbind(kth_Subjects.list$Train_X, kth_Scores_Train$fPCA_Scores)
+  kth_Subjects.list$Test_X = cbind(kth_Subjects.list$Test_X, kth_Scores_Test$Scores)
   
+  # Extract Features Groups
+  kth_Subjects.list$Train_X_FeaturesGroupsNums = kth_Scores_Train$Features_Group_Nums
+  kth_Subjects.list$Test_X_FeaturesGroupsNums = kth_Scores_Test$Features_Group_Nums
+  
+  # Exporting
+  saveRDS(kth_Subjects.list, file = paste0())
 })
-
-Scores_Train$FunImgARCWSF___Subjects_ADCN$fPCA_Scores$
-Scores_Test$FunImgARCWSF___Subjects_ADCN$ACC_pre_L
-
-
-
-
-
-
-
-
-
-#===============================================================================
-# Loading Data
-#===============================================================================
-Subjects = readRDS(path_Subjects)
-Names_Subjects_Lists = names(Subjects)
-
-
-
-Names_Scores = names(Scores)
-
-
-
-
-
-#===============================================================================
-# Combining
-#===============================================================================
-fs::dir_create(path_Export, recurse = T)
-
-Combined.list = lapply(seq_along(Scores), function(i){
-  
-  ith_Score_Name = str_split(Names_Scores[i], "___")[[1]][2]
-  
-  # Subjects list
-  if(grep("_NA", ith_Score_Name, ignore.case = T) %>% length > 0){
-    ith_Subject_List = Subjects[[which(ith_Score_Name == Names_Subjects_Lists)]]
-  }else{
-    ith_Subject_List = Subjects[[which(ith_Score_Name == Names_Subjects_Lists)]] %>% dplyr::select(DEMO___DIAGNOSIS_NEW)
-  }
-  
-  
-  ith_Scores = Scores[[i]]$fPCA_Scores
-  
-  ith_VarGroupNums = Scores[[i]]$Features_Group_Nums
-  
-  
-  # Combine
-  ith_Combined = cbind(ith_Subject_List, ith_Scores)
-  
-  ith_Combined.list = list(Combined = ith_Combined, VarGroupNums = ith_VarGroupNums)  
-  
-  saveRDS(ith_Combined.list, paste0(path_Export, "/", Names_Scores[i], ".rds"))
-  
-  ith_Combined.list
-  
-}) %>% setNames(Names_Scores)
-
-
 
 
 
