@@ -1,0 +1,6 @@
+
+
+#
+1) FC를 dist에 따라 sorting 한 결과를 함수적 자료로 사용
+2) 각각의 Diagnosis 그룹에 따른 Subjects 리스트 추출
+black_catxxx

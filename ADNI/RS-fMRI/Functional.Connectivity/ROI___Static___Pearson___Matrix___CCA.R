@@ -1,0 +1,147 @@
+################################################################################
+# Loading packages
+################################################################################
+# rm(list=ls())
+#===============================================================================
+# Mac
+#===============================================================================
+# path_OS = "/Users/Ido/"
+#===============================================================================
+# Windows
+#===============================================================================
+# path_OS = "C:/Users/lleii/"
+#===============================================================================
+install_packages = function(packages, load=TRUE) {
+  # load : load the packages after installation?
+  for(pkg in packages) {
+    if (!require(pkg, character.only = TRUE)) {
+      install.packages(pkg)
+    }
+    
+    if(load){
+      library(pkg, character.only = TRUE)
+    }
+  }
+}
+install_packages(c("tidyverse", "dplyr", "clipr", "fda", "tidyr", "stringr"))
+################################################################################
+# Loading My Functions
+################################################################################
+path_Dropbox = paste0(path_OS, "Dropbox")
+path_GitHub = list.files(path_Dropbox, pattern = "Github", full.names = T)
+path_Rpkgs = list.files(path_GitHub, pattern = "Rpkgs", full.names = T)
+Rpkgs = c("ADNIprep", "StatsR", "refineR", "dimR")
+Load = sapply(Rpkgs, function(y){
+  list.files(paste0(path_Rpkgs, "/", y, "/R"), full.names = T) %>% walk(source) 
+})
+################################################################################
+# path : Data
+################################################################################
+path_Data = paste0(path_Dropbox, "/Data")
+#-------------------------------------------------
+# ADNI
+#-------------------------------------------------
+path_ADNI = list.files(path_Data, full.names = T, pattern = "ADNI")
+# Subjects List
+path_Subjects = list.files(path_ADNI, "Subjects.Lists", full.names = TRUE) %>% 
+  list.files(., full.names = TRUE) %>%
+  grep("Subjects_Lists_Exported$", ., value = TRUE) %>% 
+  list.files(., full.names = TRUE) %>% 
+  grep("Final$", ., value = TRUE) %>% 
+  list.files(., full.names = TRUE) %>% 
+  grep("list.csv$", ., value  =TRUE)
+# FC
+path_FC = list.files(path_ADNI, "Connectivity", full.names = T)
+path_FC_Matrix = list.files(path_FC, "___Matrix", full.names = T) %>% 
+  grep("Matrix___", ., value = T, invert = T)
+path_FC_Graph = list.files(path_FC, "GraphMeasures", full.names = T)
+path_FC_CCA = list.files(path_FC, "_CCA", full.names = T)
+# FDA
+path_FD = list.files(path_ADNI, full.names = T, pattern = "Functional.Data")
+path_Euclidean = list.files(path_FD, pattern = "Euclidean", full.names=TRUE)
+path_FPCA = list.files(path_Euclidean, pattern = "FPCA", full.names=TRUE)
+################################################################################
+# path : papers
+################################################################################
+path_Papers = list.files(path_Data, "Papers", full.names = T)
+# FDA
+path_Papers_FDA = list.files(path_Papers, "Euclidean", full.names = T)
+path_Papers_FDA_Data = list.files(path_Papers_FDA, "Data", full.names = T)
+#===============================================================================
+
+
+
+
+
+
+
+
+#===============================================================================
+# Load Subjects List
+#===============================================================================
+path_FDA_FunImgARCWSF = list.files(path_Papers_FDA_Data, "FunImgARCWSF", full.names = T)
+# path_FDA_FunImgARglobalCWSF = list.files(path_Papers_FDA_Data, "FunImgARglobalCWSF", full.names = T)
+
+Names_FDA_1 = path_FDA_FunImgARCWSF %>% basename_sans_ext()
+# Names_FDA_2 = path_FDA_FunImgARglobalCWSF %>% basename_sans_ext()
+
+SubjectsList_1 = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA_1)
+# SubjectsList_2 = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA_2)
+
+RID_SubjectseList = lapply(SubjectsList_1, function(y){
+  y$Train_X$RID
+}) %>% setNames(Names_FDA_1)
+
+
+
+
+#===============================================================================
+# Load FC Matrices
+#===============================================================================
+path_FC_Matrices = list.files(path_FC_Matrix, full.name=T)
+Names_FC_Matrices = basename_sans_ext(path_FC_Matrices)
+FC_Matrices = lapply(path_FC_Matrices, readRDS) %>% setNames(Names_FC_Matrices)
+
+
+
+
+
+
+
+
+
+#===============================================================================
+# Define a function to compute CCA
+#===============================================================================
+Compute_CCA_by_RID = function(Cov.list, RID, file.name){
+  Cov.list = FC_Matrices[[1]]
+  
+  RID_Cov = names(Cov.list) %>% sub("RID_", "", .) %>% as.numeric()
+  
+  which_RID = which(RID_Cov %in% as.numeric(RID))
+  
+  Results = DimMat___Sym___Cov___CCA(Cov.list = Cov.list[which_RID], 
+                                     path_Export = path_FC_CCA, 
+                                     file.name = file.name)
+    
+  
+  
+}
+
+
+
+
+
+
+#===============================================================================
+# Computing CCA for each RID group
+#===============================================================================
+# Non-global
+CCA_1 = DimMat___Sym___Cov___CCA(Cov.list = FC_Matrices[[1]], path_Export = path_FC_CCA, file.name = "Test")
+
+
+
+
+
+
+

@@ -35,7 +35,6 @@ Load = sapply(Rpkgs, function(y){
 #=============================================================================================
 path_Data = paste0(path_Dropbox, "/Data")
 path_ADNI = list.files(path_Data, full.names = T, pattern = "ADNI")
-# Subjects List
 path_Subjects = list.files(path_ADNI, full.names = TRUE, pattern = "Subjects.Lists") %>% 
   list.files(., full.names = TRUE) %>%
   grep("Subjects_Lists_Exported$", ., value = TRUE) %>% 
@@ -43,10 +42,6 @@ path_Subjects = list.files(path_ADNI, full.names = TRUE, pattern = "Subjects.Lis
   grep("Final$", ., value = TRUE) %>% 
   list.files(., full.names = TRUE) %>% 
   grep("list.csv$", ., value  =TRUE)
-# FC
-path_FC = list.files(path_ADNI, "Connectivity", full.names = T)
-path_Graph = list.files(path_FC, "GraphMeasures", full.names = T)
-# FDA
 path_FD = list.files(path_ADNI, full.names = T, pattern = "Functional.Data")
 path_Euclidean = list.files(path_FD, pattern = "Euclidean", full.names=TRUE)
 path_FPCA = list.files(path_Euclidean, pattern = "FPCA", full.names=TRUE)
@@ -59,29 +54,76 @@ path_FPCA = list.files(path_Euclidean, pattern = "FPCA", full.names=TRUE)
 
 
 
-#===============================================================================
-# Subjects list
-#===============================================================================
-Subjects = read.csv(paste0(path_OS, "Dropbox/Data/#ADNI___RS.fMRI___Subjects.Lists/Subjects_Lists_Exported/Final/[Final_Selected]_Subjects_list.csv"))
-Subjects_SB = Subjects[Subjects$NFQ___BAND.TYPE=="SB",]
-
-
-
-
 
 
 
 #===============================================================================
-# path & files list
+# Path
 #===============================================================================
+# PC Scores
+path_Scores = list.files(path_FPCA, full.names=T, pattern = "Scores")
+path_Scores_Train = path_Scores %>% grep("Train", ., value = T)
+path_Scores_Test = path_Scores %>% grep("Test", ., value = T)
+
+Names_Scores_Pipeline = path_Scores_Test %>% 
+  basename_sans_ext() %>% 
+  str_extract(., "(?<=Scores___).*(?=___Subjects)")
+Names_Scores_Subjects = path_Scores_Test %>% 
+  basename_sans_ext() %>% 
+  str_extract(., "(?<=CWSF___).*(?=___Test)")
+Names_Scores_Files = paste0(Names_Scores_Pipeline, "___", Names_Scores_Subjects)
+
+
+
+# Subject
+path_Subjects = list.files(path_Euclidean, pattern = "Subjects", full.names=T) %>% list.files(full.names = T)
+path_Subjects = c(path_Subjects, path_Subjects)
+# Names_Subjects = path_Subjects %>% basename_sans_ext()
+
+
+
+
+
+
+
 
 
 
 
 
 #===============================================================================
-# Computing static FC for each region
+# Combine Train, Test and Subjects
 #===============================================================================
+# Load subject
+Subjects.list = lapply(path_Subjects, readRDS) %>% setNames(Names_Scores_Files)
+
+# Load Train
+Scores_Train = lapply(path_Scores_Train, readRDS) %>% setNames(Names_Scores_Files)
+
+# Load Test
+Scores_Test = lapply(path_Scores_Test, readRDS) %>% setNames(Names_Scores_Files)
+
+
+# Export
+Combined = lapply(seq_along(Scores_Train), function(k){
+  
+  kth_Subjects.list = Subjects.list[[k]]
+  kth_Scores_Train = Scores_Train[[k]]
+  kth_Scores_Test = Scores_Test[[k]]
+  
+  # Extract scores
+  kth_Subjects.list$Train_X = cbind(kth_Subjects.list$Train_X, kth_Scores_Train$fPCA_Scores)
+  kth_Subjects.list$Test_X = cbind(kth_Subjects.list$Test_X, kth_Scores_Test$Scores)
+  
+  # Extract Features Groups
+  kth_Subjects.list$Train_X_FeaturesGroupsNums = kth_Scores_Train$Features_Group_Nums
+  kth_Subjects.list$Test_X_FeaturesGroupsNums = kth_Scores_Test$Features_Group_Nums
+  
+  # Exporting
+  # path_Export = paste0(path_Euclidean, "/Combined Data")
+  # dir.create(path_Export, F)
+  saveRDS(kth_Subjects.list, file = paste0(path_Export, "/Combiend___", Names_Scores_Files[k], ".rds"))
+})
 
 
 

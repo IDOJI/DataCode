@@ -31,8 +31,10 @@ list.files(paste0(path_OS, "Dropbox/Github/Rpkgs/refineR/R"), full.names = T) %>
 #===============================================================================
 # path_clip()
 # setwd("/Users/Ido/Library/CloudStorage/Dropbox/Github/Papers/Papers___Wrting/___Papers___진행중/Data")
-setwd(paste0(path_OS, "Dropbox/Github/@GitHub___Papers___Writing___PCC FDA/Data"))
+setwd(paste0(path_OS, "Dropbox/Data"))
 getwd()
+
+
 
 
 
@@ -46,6 +48,31 @@ getwd()
 path_Data_Subject = paste0(path_OS, "Dropbox/Data/#ADNI___RS.fMRI___Subjects.Lists")
 path_Data_BOLD = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___BOLD.Signals")
 path_Data_FC = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Functional.Connectivity")
+path_Data_FDA = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___SB___Functional.Data")
+# path Export
+path_Data_FDA_Export = paste0(path_Data_FDA, "/ROI___AAL3___Static___Pearson___FisherZ___Combined.by.Each.Region___Sorted.by.Voxel.Euclidean.Distance")
+
+
+
+
+
+
+
+
+
+#===============================================================================
+# Load Data
+#===============================================================================
+# Subjects
+Subjects = read.csv(paste0(path_Data_Subject, "/Subjects_Lists_Exported/Final/[Final_Selected]_Subjects_list.csv"))
+Subjects_SB = Subjects[Subjects$NFQ___BAND.TYPE=="SB",]
+
+# FC combined
+path_FC_1 = paste0(path_Data_FC, "/ROI___AAL3___FunImgARCWSF___Static___Pearson___FisherZ___Combined.by.Each.Region") %>% list.files(full.names=T)
+path_FC_2 = paste0(path_Data_FC, "/ROI___AAL3___FunImgARglobalCWSF___Static___Pearson___FisherZ___Combined.by.Each.Region") %>% list.files(full.names=T)
+FC_1 = readRDS(path_FC_1)
+FC_2 = readRDS(path_FC_2)
+
 
 
 
@@ -55,94 +82,54 @@ path_Data_FC = paste0(path_OS, "Dropbox/Data/ADNI___RS.fMRI___Functional.Connect
 
 
 #===============================================================================
-# FC among ROI
+# Center dist
 #===============================================================================
-path_FC_1 = paste0(path_Data_FC, "/ROI___AAL3___FunImgARCWSF___Static___Pearson___FisherZ")
-path_FC_2 = paste0(path_Data_FC, "/ROI___AAL3___FunImgARglobalCWSF___Static___Pearson___FisherZ")
-path_FC_1_Files = list.files(path_FC_1, full.names = T)
-path_FC_2_Files = list.files(path_FC_2, full.names = T)
+# Data names
+Name_Data_1 = "Voxelwise___AAL3___FunImgARCWSF"
 
-FC_1_Combined.list = lapply(path_FC_1_Files, function(y){
-  ith_FC = readRDS(y)
-  diag(ith_FC) = NA
-  return(ith_FC)
-})
+# Data path
+path_Data_1 = paste0(path_Data_BOLD, "/", Name_Data_1, "___Raw")
 
-FC_2_Combined.list = lapply(path_FC_2_Files, function(y){
-  ith_FC = readRDS(y)
-  diag(ith_FC) = NA
-  return(ith_FC)
-})
+# Data path list
+path_List_Data_1 = list.files(path_Data_1, full.names = T)
 
+# Load Data
+BOLD = readRDS(path_List_Data_1[1])
+
+# Compute median & Export
+path_Export = path_Data_FDA_Export
+# Center_Dist.mat = RS.fMRI_5_Euclidean.Distance___Voxelwise.BOLD.Signals___Center.Coordinates(BOLD, path_Export)
 
 
-
-
-
-#===============================================================================
-# Extract RID
-#===============================================================================
-FC_1_Files_RID = list.files(path_FC_1, full.names = F) %>% substr(1,8)
-FC_2_Files_RID = list.files(path_FC_2, full.names = F) %>% substr(1,8)
-
-
+# Center distance
+path_Center_Dist.mat = list.files(path_Data_FDA_Export, full.names=T, pattern = "Center")
+Center_Dist.mat = readRDS(path_Center_Dist.mat)
 
 
 
 
 
 #===============================================================================
-# Brain Regions
+# Sorting FC by dist
 #===============================================================================
-Brain_Regions = FC_1_Combined.list[[1]] %>% names
+#==============
+# non global
+#==============
+Brain_Region = names(FC_1)
+FC.list = FC_1
+path_Export = path_Data_FDA_Export
+preprocessing_pipeline = "FunImgARCWSF"
+FC_1_Sorted.list = RS.fMRI_5_Euclidean.Distance___Voxelwise.BOLD.Signals___Sorted.FC.by.Dist.for.Each.Region(Brain_Region, FC.list, Center_Dist.mat, path_Export, preprocessing_pipeline, T)
 
 
-
-
-
-
-
-#===============================================================================
-# Combine by ROI
-#===============================================================================
-Combined_FC_1.df = do.call(rbind, FC_1_Combined.list)
-Combined_FC_2.df = do.call(rbind, FC_2_Combined.list)
-
-FC_1_Combined.by.Region = lapply(seq_along(Brain_Regions), function(k){
-  kth_Region.mat = matrix(Combined_FC_1.df[,k], nrow=ncol(Combined_FC_1.df), ncol=nrow(Combined_FC_1.df)/ncol(Combined_FC_1.df))  
-  colnames(kth_Region.mat) = FC_1_Files_RID
-  rownames(kth_Region.mat) = Brain_Regions
-  return(kth_Region.mat)
-}) %>% setNames(Brain_Regions)
-
-
-FC_2_Combined.by.Region = lapply(seq_along(Brain_Regions), function(k){
-  kth_Region.mat = matrix(Combined_FC_2.df[,k], nrow=ncol(Combined_FC_2.df), ncol=nrow(Combined_FC_2.df)/ncol(Combined_FC_2.df))  
-  colnames(kth_Region.mat) = FC_2_Files_RID
-  rownames(kth_Region.mat) = Brain_Regions
-  return(kth_Region.mat)
-}) %>% setNames(Brain_Regions)
-
-
-
-
-#===============================================================================
-# Exporting
-#===============================================================================
-# Exporting path & name
-path_Export_1 = paste0(path_FC_1, "___Combined.by.Each.Region")
-path_Export_2 = paste0(path_FC_2, "___Combined.by.Each.Region")
-
-# dir
-dir.create(path_Export_1, F)
-dir.create(path_Export_2, F)
-
-# Export
-saveRDS(FC_1_Combined.by.Region, paste0(path_Export_1, "/FC_Combined_by_Regions.rds"))
-saveRDS(FC_2_Combined.by.Region, paste0(path_Export_2, "/FC_Combined_by_Regions.rds"))
-
-
-
+#==============
+# global
+#==============
+Brain_Region = names(FC_2)
+FC.list = FC_2
+path_Export = path_Data_FDA_Export
+preprocessing_pipeline = "FunImgARglobalCWSF"
+FC_2_Sorted.list = RS.fMRI_5_Euclidean.Distance___Voxelwise.BOLD.Signals___Sorted.FC.by.Dist.for.Each.Region(Brain_Region, FC.list, Center_Dist.mat, path_Export, preprocessing_pipeline, T)
 
 
 
