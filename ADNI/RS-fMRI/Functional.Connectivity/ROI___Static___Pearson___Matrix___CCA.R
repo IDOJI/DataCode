@@ -85,13 +85,15 @@ path_Papers_FDA_Data = list.files(path_Papers_FDA, "Data", full.names = T)
 #===============================================================================
 path_FDA_FunImgARCWSF = list.files(path_Papers_FDA_Data, "FunImgARCWSF", full.names = T)
 
-Names_FDA = path_FDA_FunImgARCWSF %>% basename_sans_ext()
+Names_FDA = path_FDA_FunImgARCWSF %>% basename_sans_ext() %>% sub("Combiend___", "", .)
 
 SubjectsList = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA)
 
 RID_SubjectseList = lapply(SubjectsList, function(y){
   y$Train_X$RID
-}) %>% setNames(Names_FDA_1)
+}) %>% setNames(Names_FDA)
+
+
 
 
 
@@ -113,25 +115,22 @@ FC_Matrices = lapply(path_FC_Matrices, readRDS) %>% setNames(Names_FC_Matrices)
 
 
 
+
 #===============================================================================
 # Define a function to compute CCA
 #===============================================================================
-Compute_CCA_by_RID = function(Cov.list, RID, file.name){
+Compute_CCA_by_RID = function(Cov.list, RID){
   # Cov.list = FC_Matrices[[1]]
   # file.name="Test"
   # RID = RID_SubjectseList[[1]]
   
-  RID_Cov = names(Cov.list)
-  
-  which_RID = which(RID_Cov %in% RID)
+  which_RID = which(names(Cov.list) %in% RID)
   
   
   Results = DimMat___Sym___Cov___CCA(Cov.list = Cov.list[which_RID], 
-                                     path_Export = path_FC_CCA, 
-                                     file.name = file.name)
-    
+                                     explained_var_prop = 0.95)
   
-  
+  Results %>% return
 }
 
 
@@ -142,8 +141,40 @@ Compute_CCA_by_RID = function(Cov.list, RID, file.name){
 #===============================================================================
 # Computing CCA for each RID group
 #===============================================================================
-# Non-global
-CCA_1 = DimMat___Sym___Cov___CCA(Cov.list = FC_Matrices[[1]], path_Export = path_FC_CCA, file.name = "Test")
+Pipelines = c("FunImgARCWSF", "FunImgARglobalCWSF")
+for(k in seq_along(Pipelines)){
+  CCA.list = lapply(RID_SubjectseList, function(ith_RID){
+    Compute_CCA_by_RID(Cov.list = FC_Matrices[[k]], RID = ith_RID)
+  }) %>% setNames(Names_FDA)
+  saveRDS(CCA.list, paste0(path_FC_CCA, "/", Pipelines[k], ".rds"))  
+}
+
+
+
+
+
+
+
+
+
+
+#===============================================================================
+# Check the results
+#===============================================================================
+path_CCA_Results = list.files(path_FC_CCA, full.names = T)
+Names_Files = basename_sans_ext(path_CCA_Results)
+Results = lapply(path_CCA_Results, readRDS) %>% setNames(Names_Files)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
