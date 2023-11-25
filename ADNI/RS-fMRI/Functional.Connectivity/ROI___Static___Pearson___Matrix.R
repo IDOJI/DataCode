@@ -110,34 +110,32 @@ path_Papers_FDA_Data = list.files(path_Papers_FDA, "Data", full.names = T)
 #===============================================================================
 # Combine all FC matrices
 #===============================================================================
-# path_Pipeline = list.files(path_FC, pattern = "FunImgAR", full.names = T)
-# path_FC_1 =list.files(path_Pipeline[1], "Static___Pearson___Raw", full.names = T)
-# path_FC_2 =list.files(path_Pipeline[2], "Static___Pearson___Raw", full.names = T)
-# 
-# 
-# 
-# path_FC_Files_1 = list.files(path_FC_1, full.names=T)
-# path_FC_Files_2 = list.files(path_FC_2, full.names=T)
-# 
-# 
-# Names_FC_Files_1 = path_FC_Files_1 %>% basename_sans_ext()
-# Names_FC_Files_2 = path_FC_Files_2 %>% basename_sans_ext()
-# 
-# RID_FC_Files_1 = Names_FC_Files_1 %>% str_extract(., "RID_\\d+")
-# RID_FC_Files_2 = Names_FC_Files_2 %>% str_extract(., "RID_\\d+")
-# 
-# 
-# FC_1.list = lapply(path_FC_Files_1, readRDS) %>% setNames(Names_FC_Files_1)
-# FC_2.list = lapply(path_FC_Files_2, readRDS) %>% setNames(Names_FC_Files_2)
-# 
-# # as matrix
-# FC_1_Mat.list = lapply(FC_1.list, as.matrix)
-# FC_2_Mat.list = lapply(FC_2.list, as.matrix)
-# 
-# # save
-# path_FC_Matrix_1 = path_FC_Matrix %>% grep("(FZ)", ., value= T, invert= T)
-# saveRDS(FC_1_Mat.list, paste0(path_FC_Matrix_1, "/", "FunImgARCWSF.rds"))
-# saveRDS(FC_2_Mat.list, paste0(path_FC_Matrix_1, "/", "FunImgARglobalCWSF.rds"))
+path_Pipeline = list.files(path_FC, pattern = "FunImgAR", full.names = T)
+path_FC_1 =list.files(path_Pipeline[1], "Static___Pearson___Raw", full.names = T)
+path_FC_2 =list.files(path_Pipeline[2], "Static___Pearson___Raw", full.names = T)
+
+
+
+path_FC_Files_1 = list.files(path_FC_1, full.names=T)
+path_FC_Files_2 = list.files(path_FC_2, full.names=T)
+
+Names_FC_Files_1 = path_FC_Files_1 %>% basename_sans_ext()
+Names_FC_Files_2 = path_FC_Files_2 %>% basename_sans_ext()
+
+RID_FC_Files_1 = Names_FC_Files_1 %>% str_extract(., "RID_\\d+")
+RID_FC_Files_2 = Names_FC_Files_2 %>% str_extract(., "RID_\\d+")
+
+FC_1.list = lapply(path_FC_Files_1, readRDS) %>% setNames(RID_FC_Files_1)
+FC_2.list = lapply(path_FC_Files_2, readRDS) %>% setNames(RID_FC_Files_2)
+
+# as matrix
+FC_1_Mat.list = lapply(FC_1.list, as.matrix)
+FC_2_Mat.list = lapply(FC_2.list, as.matrix)
+
+# save
+path_FC_Matrix_1 = path_FC_Matrix %>% grep("(FZ)", ., value= T, invert= T)
+saveRDS(FC_1_Mat.list, paste0(path_FC_Matrix_1, "/", "FunImgARCWSF.rds"))
+saveRDS(FC_2_Mat.list, paste0(path_FC_Matrix_1, "/", "FunImgARglobalCWSF.rds"))
 
 
 

@@ -50,10 +50,14 @@ path_Subjects = list.files(path_ADNI, "Subjects.Lists", full.names = TRUE) %>%
   grep("Final$", ., value = TRUE) %>% 
   list.files(., full.names = TRUE) %>% 
   grep("list.csv$", ., value  =TRUE)
+# BOLD
+path_BOLD = list.files(path_ADNI, "BOLD", full.names = T)
 # FC
 path_FC = list.files(path_ADNI, "Connectivity", full.names = T)
 path_FC_Matrix = list.files(path_FC, "___Matrix", full.names = T) %>% 
   grep("Matrix___", ., value = T, invert = T)
+path_FC_Matrix_Raw = path_FC_Matrix %>% grep("Pearson___", ., value=T)
+path_FC_Matrix_FZ = path_FC_Matrix %>% grep("Pearson___", ., value=T, invert=T)
 path_FC_Graph = list.files(path_FC, "GraphMeasures", full.names = T)
 path_FC_CCA = list.files(path_FC, "_CCA", full.names = T)
 # FDA
@@ -77,32 +81,31 @@ path_Papers_FDA_Data = list.files(path_Papers_FDA, "Data", full.names = T)
 
 
 #===============================================================================
-# Load Subjects List
+# Load Subjects List & Extract each RID
 #===============================================================================
 path_FDA_FunImgARCWSF = list.files(path_Papers_FDA_Data, "FunImgARCWSF", full.names = T)
-# path_FDA_FunImgARglobalCWSF = list.files(path_Papers_FDA_Data, "FunImgARglobalCWSF", full.names = T)
 
-Names_FDA_1 = path_FDA_FunImgARCWSF %>% basename_sans_ext()
-# Names_FDA_2 = path_FDA_FunImgARglobalCWSF %>% basename_sans_ext()
+Names_FDA = path_FDA_FunImgARCWSF %>% basename_sans_ext()
 
-SubjectsList_1 = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA_1)
-# SubjectsList_2 = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA_2)
+SubjectsList = lapply(path_FDA_FunImgARCWSF, readRDS) %>% setNames(Names_FDA)
 
-RID_SubjectseList = lapply(SubjectsList_1, function(y){
+RID_SubjectseList = lapply(SubjectsList, function(y){
   y$Train_X$RID
 }) %>% setNames(Names_FDA_1)
 
 
 
 
+
+
+
+
 #===============================================================================
-# Load FC Matrices
+# Load Raw FC Matrices
 #===============================================================================
-path_FC_Matrices = list.files(path_FC_Matrix, full.name=T)
+path_FC_Matrices = list.files(path_FC_Matrix_Raw, full.names=T)
 Names_FC_Matrices = basename_sans_ext(path_FC_Matrices)
 FC_Matrices = lapply(path_FC_Matrices, readRDS) %>% setNames(Names_FC_Matrices)
-
-
 
 
 
@@ -114,11 +117,14 @@ FC_Matrices = lapply(path_FC_Matrices, readRDS) %>% setNames(Names_FC_Matrices)
 # Define a function to compute CCA
 #===============================================================================
 Compute_CCA_by_RID = function(Cov.list, RID, file.name){
-  Cov.list = FC_Matrices[[1]]
+  # Cov.list = FC_Matrices[[1]]
+  # file.name="Test"
+  # RID = RID_SubjectseList[[1]]
   
-  RID_Cov = names(Cov.list) %>% sub("RID_", "", .) %>% as.numeric()
+  RID_Cov = names(Cov.list)
   
-  which_RID = which(RID_Cov %in% as.numeric(RID))
+  which_RID = which(RID_Cov %in% RID)
+  
   
   Results = DimMat___Sym___Cov___CCA(Cov.list = Cov.list[which_RID], 
                                      path_Export = path_FC_CCA, 
