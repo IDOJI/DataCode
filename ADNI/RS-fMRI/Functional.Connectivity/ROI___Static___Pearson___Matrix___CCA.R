@@ -165,9 +165,19 @@ path_CCA_Results = list.files(path_FC_CCA, full.names = T)
 Names_Files = basename_sans_ext(path_CCA_Results)
 Results = lapply(path_CCA_Results, readRDS) %>% setNames(Names_Files)
 
+for(k in seq_along(Results)){
+  
+  Results[[k]] = lapply(Results[[k]], function(X){
+    
+    X$Half_Vectorized = X$Half_Vectorized %>% as.data.frame() %>% setNames(paste0("CCA___", fit_length(1:ncol(X$Half_Vectorized), 4)))
+    return(X)
+  })
+  
+}
 
-
-
+# Save New
+saveRDS(Results[[1]], paste0(path_FC_CCA, "/", Names_Files[1], ".rds"))
+saveRDS(Results[[2]], paste0(path_FC_CCA, "/", Names_Files[2], ".rds"))
 
 
 
