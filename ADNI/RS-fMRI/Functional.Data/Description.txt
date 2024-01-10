@@ -1,3 +1,0 @@
-# SB___ROI___Pearson(FZ)___Sorted.by.Voxel.Euclidean.Distance
-각 ROI 영역에서의 복셀 좌표를 전부 평균한 좌표를 기준으로
-그 영역과 가까운 뇌 영역 순으로 FC를 정렬한 데이터
