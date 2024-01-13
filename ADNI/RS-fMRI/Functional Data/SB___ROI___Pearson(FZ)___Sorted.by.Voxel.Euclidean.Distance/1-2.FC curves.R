@@ -14,11 +14,12 @@ Selected_Regions = c("ACC_sub_L",
                      "Temporal_Mid_R", 
                      "Thal_IL_L")
 
+
 AAL3 = readRDS("/Users/Ido/Library/CloudStorage/Dropbox/Github/Rpkgs/ADNIprep/Preprocessing Tools/RS-fMRI/AAL3/AAL3 atlas.rds")
 
 Selected_Brain_Regions = AAL3 %>% dplyr::filter(Abbreviation %in% Selected_Regions)
 
-Selected_Brain_Regions$Description[10] = "the Right Inferior Parietal Gyrus, Excluding Supramarginal and Angular Gyri"
+Selected_Brain_Regions$Description[10] = "the Right Inferior Parietal Gyrus \n Excluding Supramarginal and Angular Gyri"
 
 
 
@@ -26,8 +27,11 @@ Selected_Brain_Regions$Description[10] = "the Right Inferior Parietal Gyrus, Exc
 # @ FC data ========================================================================================================
 # Load
 ## global
-Sorted_FC_by_Dist = readRDS("/Users/Ido/Library/CloudStorage/Dropbox/Papers Data/ADNI/RS-fMRI/Functional Data/SB___ROI___Pearson(FZ)___Sorted.by.Voxel.Euclidean.Distance/1.Sorted_FC/Sorted.FC.by.Dist___FunImgARglobalCWSF.rds")
-
+Sorted_FC_by_Dist = list.files(path_FunctionalData, pattern = "___SB", full.names = T) %>% 
+  list.files(., pattern = "Sorted_FC", full.names = T) %>% 
+  list.files(., pattern = "FunImgARglobalCWSF.rds", full.names = T) %>% 
+  readRDS(.)
+  
 
 # Subset by selected regions
 Selected_Sorted_FC_by_Dist = Sorted_FC_by_Dist[names(Sorted_FC_by_Dist) %in% Selected_Regions]
@@ -40,7 +44,10 @@ Selected_Sorted_FC_by_Dist = Sorted_FC_by_Dist[names(Sorted_FC_by_Dist) %in% Sel
 
 # @ Subjects ========================================================================================================
 # Diagnosis info
-Subjects_ADCN = readRDS("/Users/Ido/Library/CloudStorage/Dropbox/Papers Data/ADNI/RS-fMRI/Functional Data/SB___ROI___Pearson(FZ)___Sorted.by.Voxel.Euclidean.Distance/2.Subjects_List_Splitted/Subjects_ADCN_NA.rds")
+Subjects_ADCN = list.files(path_FunctionalData, pattern = "___SB", full.names = T) %>% 
+  list.files(., pattern = "Subjects_List_Splitted", full.names = T) %>% 
+  list.files(., pattern = "Subjects_ADCN_NA", full.names = T) %>% 
+  readRDS(.)
 
 # Data combining (train + test)
 Subjects_ADCN_X = rbind(Subjects_ADCN$Train_X, Subjects_ADCN$Test_X)
@@ -142,15 +149,15 @@ for(k in 1:length(Selected_Sorted_FC_by_Dist)){
       breaks = c("CN", "AD", "Mean CN", "Mean AD")
     ) +
     labs(color = "Colors") +  # 레전드 타이틀 추가
-    theme(legend.title = element_text(size = 20, face = "bold"), 
-          legend.text = element_text(size = 15, face = "bold")) +  # 텍스트 크기와 굵기 설정
+    theme(legend.title = element_text(size = 30, face = "bold"), 
+          legend.text = element_text(size = 26, face = "bold")) +  # 텍스트 크기와 굵기 설정
     xlab("Distance") +
     ylab("Functional Connectivity") +
     ggtitle(kth_BrainRegion) +
     theme(
-      axis.title.x = element_text(size = 20, face = "bold"),  # x축 레이블 크기와 색상 설정
-      axis.title.y = element_text(size = 20, face = "bold"),  # y축 레이블 크기와 색상 설정
-      plot.title = element_text(size = 35, color = "black", hjust = 0.5, face = "bold")  # 그래프 제목 크기, 색상 및 위치 설정
+      axis.title.x = element_text(size = 30, face = "bold"),  # x축 레이블 크기와 색상 설정
+      axis.title.y = element_text(size = 30, face = "bold"),  # y축 레이블 크기와 색상 설정
+      plot.title = element_text(size = 40, color = "black", hjust = 0.5, face = "bold")  # 그래프 제목 크기, 색상 및 위치 설정
     )
   
   
@@ -163,7 +170,7 @@ for(k in 1:length(Selected_Sorted_FC_by_Dist)){
   ## @ 2.Exporting ==============================================================================================================================================================
   path_FunctionalData_FCcurves = paste0(path_FunctionalData, "/Sorted Functional Connectivity by Voxel Euclidean Distance___SB/1.FC curves")
   ggsave(paste0(path_FunctionalData_FCcurves, "/", fit_length(k, 3), "th___", kth_BrainRegion, ".png"), 
-         plot = p, width = 15, height = 8, dpi = 300, limitsize = F)
+         plot = p, width = 15, height = 8, dpi = 100, limitsize = F)
   cat("\n", crayon::red(kth_BrainRegion), crayon::green(" is exported !"), "\n")
 }
 
